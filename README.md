@@ -1,18 +1,56 @@
-# TitanScores - Dual-Track Bias-Minimized Judging Platform
+# Meta-Judge - AI-Powered Evaluation Platform
 
-> **Revolutionizing Award Adjudication with AI-Powered Fairness**
+> **Judge the Judges - Bias Detection & Evaluation Quality Assurance**
 
-A comprehensive judging platform that combines human expertise with AI-powered objective scoring to eliminate bias and ensure fairness in the Titan100 awards evaluation process.
+A comprehensive judging platform that combines human expertise with AI-powered objective scoring to eliminate bias and ensure fairness in award evaluation processes.
+
+## 🚀 Live Demo
+
+**Demo URL**: `https://meta-judge.pages.dev` (Deploy instructions below)
 
 ## 🎯 Overview
 
-The TitanScores platform (also known as TitanCeo BiasShield) implements a **Dual-Track Bias-Minimized Judging Program** featuring:
+Meta-Judge (formerly TitanScores) implements a **Dual-Track Bias-Minimized Judging Program** featuring:
 
+- ✅ **Multi-Judge System**: 5 judge profiles with independent evaluation tracking
+- ✅ **Organization Hierarchy**: Organization → Judge → Applications structure
 - ✅ **Dual-Track Scoring**: Independent human and AI evaluation systems
 - ✅ **Bias Detection & Analysis**: Quantitative bias measurement and reporting
 - ✅ **Transparent Governance**: Complete audit trails and explainable decisions
 - ✅ **Titan100 Integration**: Custom rubrics and organizational context
 - ✅ **Scalable Architecture**: Built for growth and future award cycles
+
+## 📦 Deployment to Cloudflare Pages
+
+### Quick Deploy (Recommended)
+
+1. **Create GitHub repository** (if not already done):
+   ```bash
+   # Repository is already initialized with git!
+   # Just push to GitHub (instructions below)
+   ```
+
+2. **Connect to Cloudflare Pages**:
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+   - Pages → Create a project → Connect to Git
+   - Select your GitHub repository
+   - **Build settings**:
+     - Build command: `npm run build`
+     - Build output directory: `dist/public`
+     - Root directory: `/`
+   - Click **Save and Deploy**
+
+3. **Your site will be live** at: `https://meta-judge.pages.dev`
+
+### Alternative: Direct Upload
+
+For quick demos without GitHub:
+```bash
+npm run build
+npx wrangler pages deploy dist/public --project-name=meta-judge
+```
+
+See [CLOUDFLARE_DEPLOY_QUICK_START.md](./CLOUDFLARE_DEPLOY_QUICK_START.md) for detailed instructions.
 
 ## Technology Stack
 
