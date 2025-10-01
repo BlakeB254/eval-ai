@@ -118,7 +118,7 @@ export default function HomePage() {
             </Card>
 
             {/* LLM Scoring */}
-            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50" onClick={() => navigate('/reports?org=2')}>
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50" onClick={() => navigate('/llm-scoring?org=2')}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Brain className="h-6 w-6 text-emerald-600" />

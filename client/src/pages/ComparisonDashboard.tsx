@@ -477,7 +477,7 @@ export default function ComparisonDashboard() {
                     </Card>
                   );
                 })
-                )}
+              )}
               </TabsContent>
 
               <TabsContent value="criteria" className="space-y-4 mt-4">
