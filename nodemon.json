@@ -1,0 +1,9 @@
+{
+  "watch": ["server/src", "shared"],
+  "ext": "ts",
+  "ignore": ["server/src/**/*.spec.ts"],
+  "exec": "tsx server/src/server.ts",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
