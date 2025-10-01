@@ -71,194 +71,115 @@ export async function getComparisonData(
 export async function generateMockComparisonData(
   organizationId: number
 ): Promise<ComparisonSummary> {
-  // This simulates what the real data would look like
+  // Real application IDs from seed (5-14) and judge names
+  const applicationIds = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+  const judgeNames = [
+    'Sarah Johnson',
+    'Michael Chen',
+    'Emily Rodriguez',
+    'David Park',
+    'Amanda Williams',
+  ];
+
+  // Generate comparisons for each application (1-2 judges per application for demo)
+  const comparisons: ComparisonData[] = [];
+
+  applicationIds.forEach((appId, index) => {
+    // Assign 1-2 judges per application
+    const numJudges = index % 2 === 0 ? 2 : 1;
+    const judgeSubset = judgeNames.slice(0, numJudges);
+
+    judgeSubset.forEach((judgeName) => {
+      const baseHumanScore = 3 + Math.random() * 2; // 3.0-5.0
+      const baseAiScore = baseHumanScore + (Math.random() - 0.5) * 0.8; // Slight variation
+
+      comparisons.push({
+        applicationId: appId,
+        judgeName: judgeName,
+        humanScore: Number(baseHumanScore.toFixed(2)),
+        aiScore: Number(baseAiScore.toFixed(2)),
+        discrepancy: Number(Math.abs(baseAiScore - baseHumanScore).toFixed(2)),
+        criterionBreakdown: [
+          {
+            criterionId: 'entrepreneurial_journey',
+            criterionName: 'Entrepreneurial Journey',
+            humanScore: Math.round(baseHumanScore),
+            aiScore: Math.round(baseAiScore),
+            difference: Math.round(baseAiScore) - Math.round(baseHumanScore),
+          },
+          {
+            criterionId: 'company_vision',
+            criterionName: 'Company Vision',
+            humanScore: Math.round(baseHumanScore + (Math.random() - 0.5)),
+            aiScore: Math.round(baseAiScore + (Math.random() - 0.5)),
+            difference: 0,
+          },
+          {
+            criterionId: 'what_makes_titan',
+            criterionName: 'What Makes a Titan',
+            humanScore: Math.round(baseHumanScore - (Math.random() * 0.5)),
+            aiScore: Math.round(baseAiScore - (Math.random() * 0.5)),
+            difference: 0,
+          },
+          {
+            criterionId: 'accomplishments',
+            criterionName: 'Accomplishments',
+            humanScore: Math.round(baseHumanScore + (Math.random() * 0.5)),
+            aiScore: Math.round(baseAiScore + (Math.random() * 0.5)),
+            difference: 0,
+          },
+        ],
+      });
+    });
+  });
+
+  // Calculate statistics
+  const avgHuman = comparisons.reduce((sum, c) => sum + c.humanScore, 0) / comparisons.length;
+  const avgAi = comparisons.reduce((sum, c) => sum + c.aiScore, 0) / comparisons.length;
+  const avgDiscrepancy = comparisons.reduce((sum, c) => sum + c.discrepancy, 0) / comparisons.length;
+
+  // Calculate judge performance
+  const judgePerformance: JudgePerformance[] = judgeNames.map((judgeName) => {
+    const judgeComparisons = comparisons.filter((c) => c.judgeName === judgeName);
+    const judgeAvgScore = judgeComparisons.reduce((sum, c) => sum + c.humanScore, 0) / judgeComparisons.length;
+    const judgeAvgAiScore = judgeComparisons.reduce((sum, c) => sum + c.aiScore, 0) / judgeComparisons.length;
+    const judgeDiscrepancy = Math.abs(judgeAvgScore - judgeAvgAiScore);
+
+    return {
+      judgeName,
+      totalEvaluations: judgeComparisons.length,
+      averageScore: Number(judgeAvgScore.toFixed(2)),
+      averageAiScore: Number(judgeAvgAiScore.toFixed(2)),
+      correlation: 0.75 + Math.random() * 0.2, // 0.75-0.95
+      averageDiscrepancy: Number(judgeDiscrepancy.toFixed(2)),
+      consistency: 0.8 + Math.random() * 0.15, // 0.8-0.95
+      biasIndicators: judgeDiscrepancy > 0.4 ? [
+        {
+          type: judgeAvgScore > judgeAvgAiScore ? 'Leniency Bias' : 'Strictness Bias',
+          severity: judgeDiscrepancy > 0.6 ? 'medium' : 'low',
+          description: `Scores ${judgeAvgScore > judgeAvgAiScore ? 'higher' : 'lower'} than AI by ${judgeDiscrepancy.toFixed(2)} points on average`,
+          affectedApplications: judgeComparisons.map((c) => c.applicationId),
+        },
+      ] : [],
+    };
+  });
+
   return {
-    totalApplications: 3,
-    averageHumanScore: 3.8,
-    averageAiScore: 3.9,
+    totalApplications: applicationIds.length,
+    averageHumanScore: Number(avgHuman.toFixed(2)),
+    averageAiScore: Number(avgAi.toFixed(2)),
     correlation: 0.85,
-    averageDiscrepancy: 0.3,
+    averageDiscrepancy: Number(avgDiscrepancy.toFixed(2)),
     biasIndicators: [
       {
         type: 'Leniency Bias',
         severity: 'low',
-        description: 'Human scores tend to be slightly lower than AI scores',
-        affectedApplications: [2, 3],
-        affectedJudges: ['Sarah Johnson', 'Michael Chen'],
-      },
-      {
-        type: 'Halo Effect',
-        severity: 'medium',
-        description: 'Application #4 shows unusually consistent high scores across criteria',
-        affectedApplications: [4],
-        affectedJudges: ['Emily Rodriguez'],
+        description: 'Some judges tend to score slightly higher than AI on technical criteria',
+        affectedApplications: [5, 7, 9],
+        affectedJudges: ['Sarah Johnson', 'David Park'],
       },
     ],
-    comparisons: [
-      {
-        applicationId: 2,
-        judgeName: 'Sarah Johnson',
-        humanScore: 4.2,
-        aiScore: 4.5,
-        discrepancy: 0.3,
-        criterionBreakdown: [
-          {
-            criterionId: 'entrepreneurial_journey',
-            criterionName: 'Entrepreneurial Journey',
-            humanScore: 4,
-            aiScore: 5,
-            difference: 1,
-          },
-          {
-            criterionId: 'company_vision',
-            criterionName: 'Company Vision',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-          {
-            criterionId: 'what_makes_titan',
-            criterionName: 'What Makes a Titan',
-            humanScore: 5,
-            aiScore: 5,
-            difference: 0,
-          },
-          {
-            criterionId: 'accomplishments',
-            criterionName: 'Accomplishments',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-        ],
-      },
-      {
-        applicationId: 3,
-        judgeName: 'Michael Chen',
-        humanScore: 3.5,
-        aiScore: 3.8,
-        discrepancy: 0.3,
-        criterionBreakdown: [
-          {
-            criterionId: 'entrepreneurial_journey',
-            criterionName: 'Entrepreneurial Journey',
-            humanScore: 3,
-            aiScore: 4,
-            difference: 1,
-          },
-          {
-            criterionId: 'company_vision',
-            criterionName: 'Company Vision',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-          {
-            criterionId: 'what_makes_titan',
-            criterionName: 'What Makes a Titan',
-            humanScore: 3,
-            aiScore: 3,
-            difference: 0,
-          },
-          {
-            criterionId: 'accomplishments',
-            criterionName: 'Accomplishments',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-        ],
-      },
-      {
-        applicationId: 4,
-        judgeName: 'Emily Rodriguez',
-        humanScore: 3.8,
-        aiScore: 3.5,
-        discrepancy: 0.3,
-        criterionBreakdown: [
-          {
-            criterionId: 'entrepreneurial_journey',
-            criterionName: 'Entrepreneurial Journey',
-            humanScore: 4,
-            aiScore: 3,
-            difference: -1,
-          },
-          {
-            criterionId: 'company_vision',
-            criterionName: 'Company Vision',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-          {
-            criterionId: 'what_makes_titan',
-            criterionName: 'What Makes a Titan',
-            humanScore: 4,
-            aiScore: 4,
-            difference: 0,
-          },
-          {
-            criterionId: 'accomplishments',
-            criterionName: 'Accomplishments',
-            humanScore: 3,
-            aiScore: 3,
-            difference: 0,
-          },
-        ],
-      },
-    ],
-    judgePerformance: [
-      {
-        judgeName: 'Sarah Johnson',
-        totalEvaluations: 1,
-        averageScore: 4.2,
-        averageAiScore: 4.5,
-        correlation: 0.92,
-        averageDiscrepancy: 0.3,
-        consistency: 0.88,
-        biasIndicators: [
-          {
-            type: 'Leniency Bias',
-            severity: 'low',
-            description: 'Tends to score 0.3 points lower than AI on average',
-            affectedApplications: [2],
-          },
-        ],
-      },
-      {
-        judgeName: 'Michael Chen',
-        totalEvaluations: 1,
-        averageScore: 3.5,
-        averageAiScore: 3.8,
-        correlation: 0.78,
-        averageDiscrepancy: 0.3,
-        consistency: 0.85,
-        biasIndicators: [
-          {
-            type: 'Strictness Bias',
-            severity: 'low',
-            description: 'Consistently scores lower than AI, particularly on technical criteria',
-            affectedApplications: [3],
-          },
-        ],
-      },
-      {
-        judgeName: 'Emily Rodriguez',
-        totalEvaluations: 1,
-        averageScore: 3.8,
-        averageAiScore: 3.5,
-        correlation: 0.85,
-        averageDiscrepancy: 0.3,
-        consistency: 0.75,
-        biasIndicators: [
-          {
-            type: 'Halo Effect',
-            severity: 'medium',
-            description: 'Shows unusually consistent high scores across all criteria',
-            affectedApplications: [4],
-          },
-        ],
-      },
-    ],
+    comparisons: comparisons,
+    judgePerformance: judgePerformance,
   };
 }
