@@ -11,6 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -19,15 +26,23 @@ import {
   Bot,
   BarChart3,
   AlertCircle,
+  Building2,
+  UserCircle,
+  FileText,
 } from 'lucide-react';
 import { generateMockComparisonData, type ComparisonSummary } from '@/api/comparison';
 
+type ViewMode = 'organization' | 'applicant' | 'judge';
+
 export default function ComparisonDashboard() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const organizationId = searchParams.get('org') || '2';
 
   const [data, setData] = useState<ComparisonSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('organization');
+  const [selectedApplicant, setSelectedApplicant] = useState<string>('');
+  const [selectedJudge, setSelectedJudge] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -57,7 +72,40 @@ export default function ComparisonDashboard() {
     );
   }
 
-  const scoreDifference = data.averageAiScore - data.averageHumanScore;
+  // Get unique applicants and judges from data
+  const uniqueApplicants = Array.from(
+    new Set(data.comparisons.map((c) => c.applicationId))
+  ).sort((a, b) => a - b);
+
+  const uniqueJudges = Array.from(
+    new Set(data.comparisons.map((c) => c.judgeName))
+  ).sort();
+
+  // Filter data based on view mode
+  const filteredComparisons = data.comparisons.filter((comparison) => {
+    if (viewMode === 'applicant' && selectedApplicant) {
+      return comparison.applicationId === parseInt(selectedApplicant);
+    }
+    if (viewMode === 'judge' && selectedJudge) {
+      return comparison.judgeName === selectedJudge;
+    }
+    return true;
+  });
+
+  // Calculate filtered stats
+  const filteredHumanAvg = filteredComparisons.length > 0
+    ? filteredComparisons.reduce((sum, c) => sum + c.humanScore, 0) / filteredComparisons.length
+    : data.averageHumanScore;
+
+  const filteredAiAvg = filteredComparisons.length > 0
+    ? filteredComparisons.reduce((sum, c) => sum + c.aiScore, 0) / filteredComparisons.length
+    : data.averageAiScore;
+
+  const filteredDiscrepancy = filteredComparisons.length > 0
+    ? filteredComparisons.reduce((sum, c) => sum + c.discrepancy, 0) / filteredComparisons.length
+    : data.averageDiscrepancy;
+
+  const scoreDifference = filteredAiAvg - filteredHumanAvg;
   const correlationQuality =
     data.correlation >= 0.9
       ? 'Excellent'
@@ -81,11 +129,119 @@ export default function ComparisonDashboard() {
               {data.totalApplications} Applications Analyzed
             </Badge>
           </div>
+
+          {/* View Mode Selector */}
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Focus View:</label>
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
+                <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                  <TabsTrigger value="organization" className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Organization Overall
+                  </TabsTrigger>
+                  <TabsTrigger value="applicant" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Applicant Focus
+                  </TabsTrigger>
+                  <TabsTrigger value="judge" className="flex items-center gap-2">
+                    <UserCircle className="h-4 w-4" />
+                    Judge Focus
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Applicant Selector */}
+            {viewMode === 'applicant' && (
+              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-blue-900 mb-1 block">
+                    Select Applicant:
+                  </label>
+                  <Select value={selectedApplicant} onValueChange={setSelectedApplicant}>
+                    <SelectTrigger className="w-[280px] bg-white">
+                      <SelectValue placeholder="Choose an applicant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueApplicants.map((appId) => (
+                        <SelectItem key={appId} value={appId.toString()}>
+                          Application #{appId}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedApplicant && (
+                  <div className="text-sm text-blue-700">
+                    <p className="font-medium">
+                      {filteredComparisons.length} Evaluation{filteredComparisons.length !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs">Received by this applicant</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Judge Selector */}
+            {viewMode === 'judge' && (
+              <div className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <UserCircle className="h-5 w-5 text-purple-600" />
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-purple-900 mb-1 block">
+                    Select Judge:
+                  </label>
+                  <Select value={selectedJudge} onValueChange={setSelectedJudge}>
+                    <SelectTrigger className="w-[280px] bg-white">
+                      <SelectValue placeholder="Choose a judge" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueJudges.map((judge) => (
+                        <SelectItem key={judge} value={judge}>
+                          {judge}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedJudge && (
+                  <div className="text-sm text-purple-700">
+                    <p className="font-medium">
+                      {filteredComparisons.length} Evaluation{filteredComparisons.length !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs">Given by this judge</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Context Banner */}
+        {viewMode !== 'organization' && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-900">
+              {viewMode === 'applicant' && selectedApplicant && `Viewing Application #${selectedApplicant}`}
+              {viewMode === 'judge' && selectedJudge && `Viewing ${selectedJudge}'s Evaluations`}
+              {((viewMode === 'applicant' && !selectedApplicant) || (viewMode === 'judge' && !selectedJudge)) &&
+                'Please select an item to view focused analysis'}
+            </AlertTitle>
+            <AlertDescription className="text-blue-800">
+              {viewMode === 'applicant' && selectedApplicant &&
+                `Analyzing all evaluations received by this applicant from different judges`}
+              {viewMode === 'judge' && selectedJudge &&
+                `Analyzing all evaluations given by this judge across different applications`}
+              {((viewMode === 'applicant' && !selectedApplicant) || (viewMode === 'judge' && !selectedJudge)) &&
+                'Stats will update once you make a selection'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -93,11 +249,16 @@ export default function ComparisonDashboard() {
               <CardDescription className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Human Average
+                {viewMode !== 'organization' && <Badge variant="outline" className="text-xs">Filtered</Badge>}
               </CardDescription>
-              <CardTitle className="text-3xl">{data.averageHumanScore.toFixed(2)}</CardTitle>
+              <CardTitle className="text-3xl">{filteredHumanAvg.toFixed(2)}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Out of 5.0</p>
+              <p className="text-sm text-muted-foreground">
+                Out of 5.0
+                {viewMode !== 'organization' && filteredComparisons.length > 0 &&
+                  ` (${filteredComparisons.length} eval${filteredComparisons.length !== 1 ? 's' : ''})`}
+              </p>
             </CardContent>
           </Card>
 
@@ -106,11 +267,16 @@ export default function ComparisonDashboard() {
               <CardDescription className="flex items-center gap-2">
                 <Bot className="h-4 w-4" />
                 AI Average
+                {viewMode !== 'organization' && <Badge variant="outline" className="text-xs">Filtered</Badge>}
               </CardDescription>
-              <CardTitle className="text-3xl">{data.averageAiScore.toFixed(2)}</CardTitle>
+              <CardTitle className="text-3xl">{filteredAiAvg.toFixed(2)}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Out of 5.0</p>
+              <p className="text-sm text-muted-foreground">
+                Out of 5.0
+                {viewMode !== 'organization' && filteredComparisons.length > 0 &&
+                  ` (${filteredComparisons.length} eval${filteredComparisons.length !== 1 ? 's' : ''})`}
+              </p>
             </CardContent>
           </Card>
 
@@ -118,7 +284,7 @@ export default function ComparisonDashboard() {
             <CardHeader className="pb-3">
               <CardDescription>Average Discrepancy</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
-                {data.averageDiscrepancy.toFixed(2)}
+                {filteredDiscrepancy.toFixed(2)}
                 {scoreDifference > 0 ? (
                   <TrendingUp className="h-5 w-5 text-amber-600" />
                 ) : (
@@ -217,39 +383,51 @@ export default function ComparisonDashboard() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4 mt-4">
-                {data.comparisons.map((comparison) => {
-                  const diff = comparison.aiScore - comparison.humanScore;
-                  const diffPercentage = Math.abs((diff / comparison.humanScore) * 100);
+                {filteredComparisons.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">
+                        {viewMode === 'applicant' && !selectedApplicant && 'Select an applicant to view evaluations'}
+                        {viewMode === 'judge' && !selectedJudge && 'Select a judge to view their evaluations'}
+                        {viewMode === 'organization' && 'No comparison data available'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  filteredComparisons.map((comparison) => {
+                    const diff = comparison.aiScore - comparison.humanScore;
+                    const diffPercentage = Math.abs((diff / comparison.humanScore) * 100);
 
-                  return (
-                    <Card
-                      key={comparison.applicationId}
-                      className={diffPercentage > 10 ? 'border-amber-200' : ''}
-                    >
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="font-semibold text-lg">
-                              Application #{comparison.applicationId}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                Judge: {comparison.judgeName}
-                              </Badge>
-                              {diffPercentage > 10 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  {diffPercentage.toFixed(0)}% difference
+                    return (
+                      <Card
+                        key={`${comparison.applicationId}-${comparison.judgeName}`}
+                        className={diffPercentage > 10 ? 'border-amber-200' : ''}
+                      >
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                Application #{comparison.applicationId}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  Judge: {comparison.judgeName}
                                 </Badge>
-                              )}
+                                {diffPercentage > 10 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    {diffPercentage.toFixed(0)}% difference
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
+                            {Math.abs(diff) < 0.2 ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <AlertTriangle className="h-5 w-5 text-amber-600" />
+                            )}
                           </div>
-                          {Math.abs(diff) < 0.2 ? (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <AlertTriangle className="h-5 w-5 text-amber-600" />
-                          )}
-                        </div>
 
                         <div className="grid grid-cols-3 gap-6">
                           <div>
@@ -298,11 +476,12 @@ export default function ComparisonDashboard() {
                       </CardContent>
                     </Card>
                   );
-                })}
+                })
+                )}
               </TabsContent>
 
               <TabsContent value="criteria" className="space-y-4 mt-4">
-                {data.comparisons.map((comparison) => (
+                {filteredComparisons.map((comparison) => (
                   <Card key={comparison.applicationId}>
                     <CardHeader>
                       <CardTitle className="text-lg">
