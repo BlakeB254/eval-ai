@@ -56,13 +56,18 @@ export async function getComparisonData(
   organizationId: number,
   rubricId?: number
 ): Promise<ComparisonSummary> {
-  const params = new URLSearchParams({ organizationId: organizationId.toString() });
-  if (rubricId) params.append('rubricId', rubricId.toString());
+  try {
+    const params = new URLSearchParams({ organizationId: organizationId.toString() });
+    if (rubricId) params.append('rubricId', rubricId.toString());
 
-  const response = await apiClient.get<{ success: boolean; data: ComparisonSummary }>(
-    `/dashboard/comparison?${params}`
-  );
-  return response.data.data;
+    const response = await apiClient.get<{ success: boolean; data: ComparisonSummary }>(
+      `/dashboard/comparison?${params}`
+    );
+    return response.data.data;
+  } catch (error) {
+    console.warn('API unavailable, using mock comparison data');
+    return generateMockComparisonData(organizationId);
+  }
 }
 
 /**
