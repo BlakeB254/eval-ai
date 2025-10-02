@@ -4,6 +4,7 @@ import OrganizationDetail from './pages/OrganizationDetail';
 import JudgeDashboardImproved from './pages/JudgeDashboardImproved';
 import ApplicationScoringImproved from './pages/ApplicationScoringImproved';
 import LLMScoringDashboard from './pages/LLMScoringDashboard';
+import LLMScoreDetail from './pages/LLMScoreDetail';
 import ComparisonDashboard from './pages/ComparisonDashboard';
 import Reports from './pages/Reports';
 import Navbar from './components/layout/Navbar';
@@ -18,6 +19,7 @@ function App() {
         <Route path="/judge" element={<JudgeDashboardImproved />} />
         <Route path="/judge/score/:applicationId" element={<ApplicationScoringImproved />} />
         <Route path="/llm-scoring" element={<LLMScoringDashboard />} />
+        <Route path="/llm-score/:applicationId" element={<LLMScoreDetail />} />
         <Route path="/comparison" element={<ComparisonDashboard />} />
         <Route path="/reports" element={<Reports />} />
       </Routes>
